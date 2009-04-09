@@ -1,0 +1,152 @@
+.in 3
+.ce 2
+A PROTOCOL FOR RESOURCE ACQUISITION OVER BROADCAST CHANNELS
+v0.3
+
+.fi
+.ti 0
+ABSTRACT
+
+This document provides a message-exchange pattern (MEP) for requesting 
+and attributing resources over a shared broadcast channel (RABC), such 
+as an electronic mailing list (see RFC822, RFC2919).
+
+.ti 0
+STATUS
+
+This section describes the status of this document at the time of its publication. 
+
+This document is the second public Working Draft of this specification.
+
+.ti 0
+CONVENTIONS
+
+The following nomenclature is defined:
+.in 5
+Alice	Requester
+.br 
+Bob	Responder to Alice's request
+.br
+Charlie	Responder to Alice's request
+.br
+Dave	Responder to Alice's request
+.br
+L	Broadcast destination [email list or message board]
+.br
+R	Resource being requested
+.br
+.in 3
+
+Note that R need not be a physical resource, it may also be a service. 
+Examples of common resource requests include a ride to a place of business,
+a piece of networking equipment, a driver to pick up a food order, etc.
+
+
+.ti 0
+ANTI-PATTERNS
+
+A common anti-pattern this protocol addresses is the lack of notification
+provided to non-selected responders informing them of which offer was selected:
+
+(1) Alice -> L		Request(R)
+.br
+(2) Bob -> Alice	Offer(R)
+.br
+(3) Charlie -> Alice	Offer(R)
+.br
+(4) Dave -> Alice	Offer(R)
+.br
+(5) Alice -> L		"Thanks!"
+.br
+
+In the above example, before MESSAGE 5, Alice may or may not have sent the private message:
+
+(6) Alice -> Bob	"Thanks, I'm using yours"
+
+Charlie and Dave are now left wondering if the thanks was directed to them, and if not, which offer was accepted. From their point of view, MESSAGE 5 was ambiguous.
+
+.ti 0
+IMPLEMENTATION OF RABC
+
+The only change required to the above pathological scenario is for MESSAGE 5
+to include an extra identifier. Requesters using RABC to request a resource
+MUST include the identifier of the party whose offer was accepted in their 
+broadcast thanks message. Any thanks expressed in this message is 
+implicitly directed at ALL offering responders, even if they are not named.
+
+Sample exchange:
+
+(1) Alice -> L		Request(R)
+.br
+(2) Bob -> Alice	Offer(R)
+.br
+(3) Charlie -> Alice	Offer(R)
+.br
+(4) Dave -> Alice	Offer(R)
+.br
+(5) Alice -> L		"Thanks BOB, received R"
+.br
+
+.ti 0
+ANONYMOUS THANKS
+
+In some situations, a responder may wish to offer a resource, 
+but not have that fact rebroadcast in the thanks message.
+A typical case for this would be if the responder is concerned that him offering 
+a resource he's holding, albeit temporarily (such as a piece of equipment), might 
+publicly imply he 
+didn't really need that resource in the first place.
+
+This is solved by including a unique anonymous key in the Offer message. There are no format
+restrictions on this key, it can be any string the responder reasonably believes 
+will be unique given the size of L:
+
+(1) Alice -> L		Request(R)
+.br
+(2) Bob -> Alice	Offer(R, ANON_12345)
+.br
+(3) Charlie -> Alice	Offer(R)
+.br
+(4) Dave -> Alice	Offer(R)
+.br
+(5) Alice -> L		"Thanks ANON_12345, received R"
+.br
+
+
+.ti 0
+RETRANSMISSION
+
+It is allowable for a requester with an outstanding request to repeat this 
+request after a personally-defined timeout. When repeating an unsatisfied 
+request, a requester MUST reply to his original request keeping intact 
+its subject field. This allows members of the broadcast channel L to 
+use message threading features in their mail clients to easily collapse 
+request retransmissions into the original request's thread.
+
+The retransmitted request thus 
+replaces the original. Members of L consider MESSAGE 1, MESSAGE 2 
+and MESSAGE 3 a single request.
+
+(1) Alice -> L		Request(R)
+.br
+(2) Alice -> L		RE: Request(R)
+.br
+(3) Alice -> L		RE: Request(R)
+.br
+(4) Dave -> Alice	Offer(R)
+.br
+(5) Alice -> L		"Thanks DAVE, received R"
+.br
+
+.ti 0
+VERSION HISTORY
+
+v0.1	jpdaigle	2008-05-20
+ Initial revision
+
+v0.2	jpdaigle	2008-06-05
+ Added STATUS section, implicit thanks to IMPLEMENTATION
+
+v0.3	jpdaigle	2009-03-10
+ Added anonymous thanks
+ 
